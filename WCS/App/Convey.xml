@@ -1,0 +1,17 @@
+﻿<?xml version='1.0' ?>
+<Config>
+  <OPCServer ConnectionString="OPC.SimaticNET">
+    <OPCGroup GroupName="PLCGroup" GroupString="S7:[PLCConvey]" UpdateRate="350">
+      <OPCItem ItemName="101_Request" ClientHandler="1" OPCItemName="DB541,X0.0,1"  ItemType="READ" IsActive="true"/>
+      <OPCItem ItemName="101_RTaskNo" ClientHandler="2" OPCItemName="DB541,X1.2,1" ItemType="READ" />
+      <OPCItem ItemName="101_RPalletCode" ClientHandler="3" OPCItemName="DB541,X1.2,1" ItemType="READ" />
+      <OPCItem ItemName="101_State" ClientHandler="6" OPCItemName="DB541,X1.2,1" ItemType="READ" IsActive="false"/>
+      <OPCItem ItemName="101_AlarmCode" ClientHandler="7" OPCItemName="DB541,X1.2,1" ItemType="READ" IsActive="false"/>
+
+      <OPCItem ItemName="101_WTaskNo" ClientHandler="2" OPCItemName="DB541,X1.2,1" ItemType="Write" />
+      <OPCItem ItemName="101_WPalletCode" ClientHandler="3" OPCItemName="DB541,X1.2,1" ItemType="Write" />
+      <OPCItem ItemName="101_Destination" ClientHandler="4" OPCItemName="DB541,X1.2,1" ItemType="Write" />
+      <OPCItem ItemName="101_WriteFinished" ClientHandler="5" OPCItemName="DB541,X1.2,1" ItemType="Write" />
+    </OPCGroup>
+  </OPCServer>
+</Config>

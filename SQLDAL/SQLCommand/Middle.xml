@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<SqlCommand>
+   <!--入庫請求，并板時將另一托盤的出庫也寫入中間表-->
+  <Command ID="SelectInStockRequestTask">
+    <CommandString>
+      select main.task_id,subtask_id, equipment, wh_id, type, priority,  hu_id, from_location_id, to_location_id,from_aisle,to_aisle, sub.result, sub.ready, 'ACK', sub.add_dt, getdate(), sub.ack_dt, sub.rtn_dt, sub.cmp_dt ,to_qty,from_location_id as location_id
+      from si_asrs_task_master main
+      inner join si_asrs_task_detail sub on main.task_id=sub.task_id
+      where main.equipment=@Device and sub.status='ISS'  and main.task_id in (select task_id from si_asrs_task_detail where status='ISS' and {0})
+    </CommandString>
+  </Command>
+  <Command ID="SelectCraneOutTask">
+    <CommandString>
+      select top {1} main.task_id,subtask_id, equipment, wh_id, type, priority,  hu_id, from_location_id, to_location_id,from_aisle,to_aisle, sub.result, sub.ready,'ACK', sub.add_dt, getdate(), sub.iss_dt, sub.ack_dt, sub.rtn_dt, sub.cmp_dt ,to_qty ,from_location_id as location_id
+      from si_asrs_task_master main
+      inner join si_asrs_task_detail sub on main.task_id=sub.task_id
+      where main.equipment=@Device and sub.status='ISS' and main.type!='MRGPUT' and LEN(from_location_id)=6 and {0}
+      order by main.ack_dt desc,main.priority,main.task_id,(case when main.type='MRG' then to_qty  else 1 end) desc,sub.subtask_id
+    </CommandString>
+  </Command>
+  <Command ID="SelectConveyMoveTask">
+    <CommandString>
+      select top 1 main.task_id,subtask_id, equipment, wh_id, type, priority,  hu_id, from_location_id, to_location_id,from_aisle,to_aisle, sub.result, sub.ready,'ACK', sub.add_dt, getdate(), sub.iss_dt, sub.ack_dt, sub.rtn_dt, sub.cmp_dt ,to_qty ,from_location_id as location_id
+      from si_asrs_task_master main
+      inner join si_asrs_task_detail sub on main.task_id=sub.task_id
+      where main.equipment=@Device and main.ack_dt is not null and LEN(from_location_id)=3 and {0}
+      order by main.ack_dt desc,main.priority,main.task_id,sub.subtask_id
+    </CommandString>
+  </Command>
+  <Command ID="UpdateAsrsTaskAck">
+    <CommandString>
+      update si_asrs_task_master set status='ACK',ack_dt=getdate() where task_id=@TaskID and status='ISS'
+    </CommandString>
+  </Command>
+  <Command ID="UpdateAsrsTaskRTN">
+    <CommandString>
+      update si_asrs_task_master set result='OK', status='RTN',rtn_dt=getdate() where task_id=@TaskID and status='ACK'
+    </CommandString>
+  </Command>
+
+  <Command ID="UpdateAsrsSubTaskAck">
+    <CommandString>
+      update si_asrs_task_detail set status='ACK',ack_dt=getdate() where task_id=@TaskID and status='ISS' and {0}
+    </CommandString>
+  </Command>
+  <Command ID="UpdateAsrsSubTaskRTN">
+    <CommandString>
+      update si_asrs_task_detail set result='OK', status='RTN',rtn_dt=getdate() where Subtask_id=@SubTaskID and status='ACK'
+    </CommandString>
+  </Command>
+</SqlCommand>

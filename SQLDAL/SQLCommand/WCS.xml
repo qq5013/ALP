@@ -1,0 +1,128 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<SqlCommand>
+  <!--任务信息-->
+  <Command ID="SelectCraneTask">
+    <CommandString>
+      SELECT top {1}  WCS_TASK.*,Flag,
+      (case when WCS_TASK.TaskType='11' and TaskAB ='A' then Aisle.InStationAddress when WCS_TASK.TaskType='11' and TaskAB ='B' then Aisle.InStationAddress1 when WCS_TASK.TaskType in ('12','13') then WCS_TASK.CellCode else '' end) FromStation,
+      (case when WCS_TASK.TaskType='11' then WCS_TASK.CellCode when (WCS_TASK.TaskType='12' or (WCS_TASK.TaskType='13' and Flag=6)) and TaskAB='A' then Aisle.OutStationAddress  when (WCS_TASK.TaskType='12' or (WCS_TASK.TaskType='13' and Flag=6)) and TaskAB='B' then Aisle.OutStationAddress1
+      when WCS_TASK.TaskType='13' and Flag=3 then WCS_TASK.ToCellCode else '' end) ToStation,Aisle.InStationNo,aisle.OutStationNo
+      FROM WCS_TASK
+      left join CMD_Aisle Aisle on WCS_TASK.AisleNo=Aisle.AisleNo
+      left join cmd_BillType BillType on BillType.BillTypeCode=WCS_TASK.BillTypeCode
+      where WCS_TASK.TaskType!='99' and {0}
+      order by TaskAB, TaskDate desc,WCS_TASK.TaskLevel,TaskID,SubTaskID
+    </CommandString>
+  </Command>
+
+  <Command ID="SelectConveyTask">
+    <CommandString>
+      select * from View_WCS_ConveyTask
+      Where {0}
+      ORDER BY TaskLevel DESC, TaskDate,AisleNo
+    </CommandString>
+  </Command>
+  <Command ID="InsertWCSTask">
+    <CommandString>
+      insert into WCS_TASK(TaskID, SubTaskID, TaskNo, BillTypeCode, TaskType, TaskLevel, Palletcode, DeviceNo, AisleNo, CellCode, ToCellCode, State, TaskDate,Type,from_location_id,to_location_id,from_aisle,to_aisle,location_id,AreaCode,TaskAB)
+      select  task_id, subtask_id, dbo.CreateTaskNo() as TaskNO,
+      case when LEN(from_location_id)=3 and LEN(to_location_id)=6 and from_location_id in ('U00','M00') then '001'
+      when LEN(from_location_id)=3 and LEN(to_location_id)=6 and from_location_id not in ('U00','M00') then '010'
+      when LEN(from_location_id)=6 and LEN(to_location_id)=3 and type not like 'MRG%' and to_location_id Not in ('U99','M99') then '020'
+      when LEN(from_location_id)=6 and LEN(to_location_id)=3 and type like 'MRG%' and to_location_id  Not in ('U99','M99') and to_qty=0 then '090'
+      when LEN(from_location_id)=6 and LEN(to_location_id)=3 and to_location_id ='U99' then '100'
+      when LEN(from_location_id)=6 and LEN(to_location_id)=6 and from_aisle=to_aisle  then '030'
+      when LEN(from_location_id)=3 and LEN(to_location_id)=3  then '080'
+      when LEN(from_location_id)=6 and LEN(to_location_id)=6 and from_aisle!=to_aisle  then '070'
+      end as BillTypeCode,
+      case when LEN(from_location_id)=3 and LEN(to_location_id)=6  then '11'
+      when LEN(from_location_id)=6 and LEN(to_location_id)=3 then '12'
+      when LEN(from_location_id)=6 and LEN(to_location_id)=6  then '13'
+      when LEN(from_location_id)=3 and LEN(to_location_id)=3  then '99'
+      end as TaskType,
+      AsrsTask_TMP.priority, hu_id,
+      case when LEN(from_location_id)=3 and LEN(to_location_id)=6 then toAisle.DeviceNo
+      when LEN(from_location_id)=6 and LEN(to_location_id)=3 then fromAisle.DeviceNo
+      when LEN(from_location_id)=6 and LEN(to_location_id)=6  then fromAisle.DeviceNo
+      when LEN(from_location_id)=3 and LEN(to_location_id)=3  then  '' end  as  DeviceNo ,
+      case when LEN(from_location_id)=3 and LEN(to_location_id)=6 then toAisle.AisleNo
+      when LEN(from_location_id)=6 and LEN(to_location_id)=3 then fromAisle.AisleNo
+      when LEN(from_location_id)=6 and LEN(to_location_id)=6  then fromAisle.AisleNo
+      when LEN(from_location_id)=3 and LEN(to_location_id)=3  then  '' end  as AisleNo,
+      case when LEN(from_location_id)=3 and LEN(to_location_id)=6 then ToCell.CellCode
+      when LEN(from_location_id)=6 and LEN(to_location_id)=3 then ToCell.CellCode
+      when LEN(from_location_id)=6 and LEN(to_location_id)=6  then fromCell.CellCode
+      when LEN(from_location_id)=3 and LEN(to_location_id)=3  then  '' end as CellCode,
+      case when LEN(from_location_id)=3 and LEN(to_location_id)=6 then ''
+      when LEN(from_location_id)=6 and LEN(to_location_id)=3 then ''
+      when LEN(from_location_id)=6 and LEN(to_location_id)=6  then ToCell.CellCode
+      when LEN(from_location_id)=3 and LEN(to_location_id)=3  then  '' end as toCellCode,
+      0 as state,getdate() as TaskDate,Type,from_location_id,to_location_id,from_aisle,to_aisle,location_id,equipment,'A'
+      from AsrsTask_TMP
+      left join CMD_Cell fromCell on AsrsTask_TMP.from_location_id=fromCell.CellName
+      left join CMD_Cell ToCell on AsrsTask_TMP.to_location_id=ToCell.CellName
+      left join CMD_AisleDevice fromAisle on AsrsTask_TMP.from_aisle=fromAisle.AisleNo and fromAisle.AreaCode=AsrsTask_TMP.equipment
+      left join CMD_AisleDevice toAisle on AsrsTask_TMP.to_aisle=toAisle.AisleNo and toAisle.AreaCode=AsrsTask_TMP.equipment
+      where task_id=@TaskID and status='ACK'
+    </CommandString>
+  </Command>
+  
+  
+   
+  <Command ID="Sp_TaskProcess">
+    <CommandString>
+      Sp_TaskProcess
+    </CommandString>
+  </Command>
+  <Command ID="Sp_UpdateTaskState">
+    <CommandString>
+      Sp_UpdateTaskState
+    </CommandString>
+  </Command>
+ 
+
+  <Command ID="UpdateTaskState">
+    <CommandString>
+      update WCS_TASK set {0} where {1}
+    </CommandString>
+  </Command>
+  <Command ID="UpdateTaskError">
+    <CommandString>
+      update WCS_TASK set CraneErrCode=@CraneErrCode,CraneErrDesc=@CraneErrDesc where TaskNo=@TaskNo
+    </CommandString>
+  </Command>
+  <Command ID="UpdateTaskAsileNo">
+    <CommandString>
+      update WCS_TASK set  AisleNo=CMD_Aisle.AisleNo from WCS_TASK cross join CMD_Aisle where TaskNo=@TaskNo and InStationNo=@InStationNo
+    </CommandString>
+  </Command>
+
+
+  <Command ID="UpdateTaskTmpStatus">
+    <CommandString>
+      update AsrsTask_TMP set  status=@status where subtask_id=@subtaskid
+    </CommandString>
+  </Command>
+
+  <Command ID="UpdateCellEmpty">
+    <CommandString>
+      update cmd_cell set PalletCode='',InDate=null where CellCode=@CellCode
+    </CommandString>
+  </Command>
+
+  <Command ID="SelectCell">
+    <CommandString>
+      select * from View_CMD_CELL_ALL WHERE {0} ORDER BY AreaCode,ShelfCode,CellCode
+    </CommandString>
+  </Command>
+
+
+  <Command ID="SelectSlideTask">
+    <CommandString>
+      select top 1 * from WCS_TASK
+      where AreaCode='ML' and TaskType='11' and  State in (1,2) and AisleNo=@AisleNo
+      order by RequestDate desc
+    </CommandString>
+  </Command>
+  
+</SqlCommand>

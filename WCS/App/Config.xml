@@ -1,0 +1,64 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Configuration>
+  <LogLevel>DEBUG</LogLevel>
+  <Attributes>
+    <Attribute Name="ScanPortName" Value="COM2" />
+    <Attribute Name="ScanBaudRate" Value="19200" />
+    <Attribute Name="TaskTest" Value="1" />
+    <Attribute Name="AreaCode" Value="001" />
+    <Attribute Name="ShowCellEdit" Value="0" />
+  </Attributes>
+  <Services>
+    <Service Name="CranePLC01" Type="MCP.Service.Siemens.dll, MCP.Service.Siemens.OPCService" ConfigFile="CranePLC01.xml" />
+    <Service Name="Convey" Type="MCP.Service.Siemens.dll, MCP.Service.Siemens.OPCService" ConfigFile="Convey.xml" />
+  </Services>
+  <Processes>
+    <Process Name="ConveyRequestProcess" Type="App.exe, App.Dispatching.Process.ConveyRequestProcess">
+      <Item ServiceName="Convey" ItemName="101_Request" />
+      <Item ServiceName="Convey" ItemName="109_Request" />
+    </Process>
+    <Process Name="ConveyPickProcess" Type="App.exe, App.Dispatching.Process.ConveyPickProcess">
+      <Item ServiceName="Convey" ItemName="101_Request" />
+      <Item ServiceName="Convey" ItemName="109_Request" />
+    </Process>
+
+    <Process Name="ConveyStackProcess" Type="App.exe, App.Dispatching.Process.ConveyStackProcess">
+      <Item ServiceName="Convey" ItemName="101_Request" />
+      <Item ServiceName="Convey" ItemName="109_Request" />
+    </Process>
+    <Process Name="ConveyInStockProcess" Type="App.exe, App.Dispatching.Process.ConveyInStockProcess">
+      <Item ServiceName="Convey" ItemName="101_Request" />
+      <Item ServiceName="Convey" ItemName="109_Request" />
+    </Process>
+    <!--堆垛机Process-->
+    
+    
+    <Process Name="CraneProcess" Type="App.exe, App.Dispatching.Process.CraneProcess">
+      <Item ServiceName="CranePLC01" ItemName="CraneTaskFinished" />
+      <Item ServiceName="CranePLC02" ItemName="CraneTaskFinished" />
+      <Item ServiceName="CranePLC03" ItemName="CraneTaskFinished" />
+      <Item ServiceName="CranePLC04" ItemName="CraneTaskFinished" />
+      <Item ServiceName="CranePLC05" ItemName="CraneTaskFinished" />
+      <Item ServiceName="CranePLC06" ItemName="CraneTaskFinished" />
+      <Item ServiceName="CranePLC07" ItemName="CraneTaskFinished" />
+      <Item ServiceName="CranePLC08" ItemName="CraneTaskFinished" />
+      <Item ServiceName="CranePLC09" ItemName="CraneTaskFinished" />
+
+      <Item ServiceName="CranePLC01" ItemName="CraneAlarmCode" />
+      <Item ServiceName="CranePLC02" ItemName="CraneAlarmCode" />
+      <Item ServiceName="CranePLC03" ItemName="CraneAlarmCode" />
+      <Item ServiceName="CranePLC04" ItemName="CraneAlarmCode" />
+      <Item ServiceName="CranePLC05" ItemName="CraneAlarmCode" />
+      <Item ServiceName="CranePLC06" ItemName="CraneAlarmCode" />
+      <Item ServiceName="CranePLC07" ItemName="CraneAlarmCode" />
+      <Item ServiceName="CranePLC08" ItemName="CraneAlarmCode" />
+      <Item ServiceName="CranePLC09" ItemName="CraneAlarmCode" />
+    </Process>
+    <!--<Process Name="ErpProcess" Type="App.exe, App.Dispatching.Process.ErpProcess">
+      <Item ServiceName="ERP" ItemName="InStock" />
+      <Item ServiceName="ERP" ItemName="OutStock" />
+      <Item ServiceName="ERP" ItemName="CheckStock" />
+      <Item ServiceName="ERP" ItemName="" />
+    </Process>-->
+  </Processes>
+</Configuration>
